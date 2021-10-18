@@ -15,20 +15,7 @@ function init() {
                 tweet.innerHTML = resultHtml;
             }).catch(alert);
         };
-        // fetch("https://seonbi.moreal.dev/", {
-        //     method: "POST",
-        //     body: {
-        //         sourceHtml: tweet.innerHTML,
-        //         preset: "ko-kr",
-        //     },
-        //     headers: headers,
-        //     mode: "cors",
-        //     credentials: "omit",
-        // })
         button.className += " seonbi-button";
-
-        console.log(bottom.className.indexOf("seonbi-button"));
-        console.log(bottom.querySelector(".seonbi-button") );
         if (bottom.querySelector(".seonbi-button") === null) {
             bottom.appendChild(button);
         }
@@ -36,5 +23,5 @@ function init() {
 }
 
 setInterval(() => {
-    init()
+    init();
 }, 1000);

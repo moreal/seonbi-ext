@@ -1,5 +1,5 @@
 browser.runtime.onMessage.addListener(
-    ({extensionId, message}, sender) => {
+    ({ message }) => {
         const headers = new Headers();
         headers.append("Content-Type", "application/json");
         return fetch("https://seonbi.moreal.dev/", {
@@ -9,9 +9,6 @@ browser.runtime.onMessage.addListener(
                 preset: "ko-kr",
             }),
             headers: headers,
-            // mode: "no-cors",
-            // credentials: "omit"
         }).then(resp => resp.json()).then(json => Promise.resolve(json)).catch(err => console.error(err));
-        return false;
     }
 );

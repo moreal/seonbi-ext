@@ -1,3 +1,5 @@
+import {} from "webextension-polyfill";
+
 browser.runtime.onMessage.addListener(
     ({ message }) => {
         const headers = new Headers();

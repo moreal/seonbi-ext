@@ -17,7 +17,6 @@ function init() {
     for (const [bottom, tweet] of bottomAndTweets) {
         const button = document.createElement("button");
         button.innerText = "Seonbi";
-        button.style.backgroundColor = "transparent";
         button.onclick = function () {
             browser.runtime.sendMessage({
                 extensionId: browser.runtime.id,

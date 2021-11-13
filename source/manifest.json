@@ -1,7 +1,7 @@
 {
 	"name": "Seonbi",
 	"version": "0.0.0",
-	"description": "An awesome new browser extension",
+	"description": "A browser extension to serve Seonbi's features to your browser.",
 	"homepage_url": "https://github.com/moreal/seonbi-ext",
 	"manifest_version": 2,
 	"minimum_chrome_version": "74",

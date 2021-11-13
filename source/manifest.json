@@ -9,8 +9,7 @@
 		"128": "icon.png"
 	},
 	"permissions": [
-        "https://twitter.com/*",
-        "webRequest"
+        "https://twitter.com/*"
     ],
 	"background": {
 		"persistent": false,

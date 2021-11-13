@@ -7,3 +7,7 @@
 ## Installation
 
 - [Chrome](https://chrome.google.com/webstore/detail/seonbi/canmkokbcamaanpcbdcgclihlnbcfofc)
+
+## Logo
+
+![](./source/icon.png)

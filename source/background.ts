@@ -1,4 +1,4 @@
-import {} from "webextension-polyfill";
+import browser from "webextension-polyfill";
 
 browser.runtime.onMessage.addListener(
     ({ message }) => {

@@ -1,3 +1,5 @@
+import browser from "webextension-polyfill";
+
 function init() {
     const bottoms = Array.from(document.querySelectorAll("article[data-testid=\"tweet\"]")).map(x => x.querySelectorAll("div[role=group]")[0]);
     const tweets = Array.from(document.querySelectorAll("article[data-testid=\"tweet\"]")).map(x => x.querySelectorAll("div[lang]")[0]);

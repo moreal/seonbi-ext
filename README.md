@@ -8,6 +8,14 @@
 
 - [Chrome](https://chrome.google.com/webstore/detail/seonbi/canmkokbcamaanpcbdcgclihlnbcfofc)
 
+## Build
+
+```
+yarn
+yarn build
+yarn web-ext build
+```
+
 ## Logo
 
 ![](./source/icon.png)

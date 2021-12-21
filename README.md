@@ -7,6 +7,7 @@
 ## Installation
 
 - [Chrome](https://chrome.google.com/webstore/detail/seonbi/canmkokbcamaanpcbdcgclihlnbcfofc)
+- [Firefox](https://addons.mozilla.org/ko/firefox/addon/seonbi/)
 
 ## Build
 

@@ -1,50 +1,35 @@
 {
-	"private": true,
-	"scripts": {
-		"build": "parcel build source/manifest.json --no-content-hash --no-source-maps --dist-dir distribution --no-cache --detailed-report 0",
-		"lint": "run-p lint:*",
-		"lint-fix": "run-p 'lint:* -- --fix'",
-		"lint:css": "stylelint source/**/*.css --aei",
-		"lint:js": "xo",
-		"test": "run-p lint:* build",
-		"watch": "parcel watch source/manifest.json --dist-dir distribution --no-cache --no-hmr"
-	},
-	"browserslist": [
-		"last 1 Chrome version",
-		"last 1 Firefox version"
-	],
-	"xo": {
-		"envs": [
-			"browser"
-		],
-		"rules": {
-			"no-unused-vars": [
-				"error",
-				{
-					"varsIgnorePattern": "browser"
-				}
-			]
-		}
-	},
-	"stylelint": {
-		"extends": "stylelint-config-xo"
-	},
-	"dependencies": {
-		"webext-options-sync": "^2.0.1",
-		"webextension-polyfill": "^0.8.0"
-	},
-	"devDependencies": {
-		"@parcel/config-webextension": "^2.0.0-rc.0",
-		"@parcel/transformer-image": "^2.0.0-rc.0",
-		"@types/webextension-polyfill": "^0.8.1",
-		"npm-run-all": "^4.1.5",
-		"parcel": "^2.0.0-rc.0",
-		"stylelint": "^13.13.1",
-		"stylelint-config-xo": "^0.20.0",
-		"web-ext": "^6.4.0",
-		"xo": "^0.44.0"
-	},
-	"webExt": {
-		"sourceDir": "distribution"
-	}
+  "name": "seonbi",
+  "displayName": "Seonbi",
+  "version": "0.0.2",
+  "description": "A basic Plasmo extension.",
+  "author": "moreal",
+  "scripts": {
+    "dev": "plasmo dev",
+    "dev:firefox": "plasmo dev --target=firefox-mv2",
+    "dev:chrome": "plasmo dev --target=chrome-mv3",
+    "build:chrome": "plasmo build",
+    "build:firefox": "plasmo build --target=firefox-mv2"
+  },
+  "dependencies": {
+    "plasmo": "0.58.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "webextension-polyfill": "0.9.0"
+  },
+  "devDependencies": {
+    "@plasmohq/prettier-plugin-sort-imports": "3.5.2",
+    "@types/chrome": "0.0.197",
+    "@types/node": "18.8.3",
+    "@types/react": "18.0.21",
+    "@types/react-dom": "18.0.6",
+    "@types/webextension-polyfill": "^0.9.1",
+    "prettier": "2.7.1",
+    "typescript": "4.8.4"
+  },
+  "manifest": {
+    "host_permissions": [
+      "https://twitter.com/*"
+    ]
+  }
 }

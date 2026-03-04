@@ -10,7 +10,9 @@
 ## Build
 
 ```
-pnpm build
+pnpm run build      # chrome-mv3
+pnpm run build:firefox
+pnpm run build:all
 ```
 
 ## Logo

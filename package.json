@@ -5,14 +5,16 @@
   "description": "A basic Plasmo extension.",
   "author": "moreal",
   "scripts": {
-    "dev": "plasmo dev",
-    "dev:firefox": "plasmo dev --target=firefox-mv2",
-    "dev:chrome": "plasmo dev --target=chrome-mv3",
-    "build:chrome": "plasmo build",
-    "build:firefox": "plasmo build --target=firefox-mv2"
+    "dev": "plasmo dev --target=chrome-mv3",
+    "dev:firefox": "plasmo dev --target=firefox-mv3",
+    "dev:chrome": "pnpm run dev",
+    "build": "plasmo build --target=chrome-mv3",
+    "build:chrome": "pnpm run build",
+    "build:firefox": "plasmo build --target=firefox-mv3",
+    "build:all": "pnpm run build:chrome && pnpm run build:firefox"
   },
   "dependencies": {
-    "plasmo": "0.58.0",
+    "plasmo": "0.90.5",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "webextension-polyfill": "0.9.0"

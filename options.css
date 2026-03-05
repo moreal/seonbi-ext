@@ -148,6 +148,7 @@ input[type="radio"] {
   border-radius: 12px;
   background: linear-gradient(160deg, #ffffff 0%, #f7faff 100%);
   min-height: 44px;
+  padding: 8px;
   box-sizing: border-box;
   cursor: pointer;
   transition: border-color 150ms ease, background 150ms ease;
@@ -157,7 +158,6 @@ input[type="radio"] {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
 }
 
 .radio-option span,

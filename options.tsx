@@ -299,6 +299,12 @@ export default function OptionsPage() {
                 <option value="text/markdown">Markdown</option>
               </select>
             </label>
+          </div>
+        </section>
+
+        <section className="options-card">
+          <h2>Punctuation</h2>
+          <div className="row">
             <label
               className={joinClasses(
                 "field",

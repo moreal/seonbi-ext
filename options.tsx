@@ -76,6 +76,12 @@ function toComparableSettings(settings: ExtensionSettings): string {
   return JSON.stringify(settings);
 }
 
+function joinClasses(
+  ...tokens: Array<string | false | null | undefined>
+): string {
+  return tokens.filter(Boolean).join(" ");
+}
+
 export default function OptionsPage() {
   const [savedSettings, setSavedSettings] = useState<ExtensionSettings | null>(null);
   const [draftSettings, setDraftSettings] = useState<ExtensionSettings | null>(null);
@@ -209,6 +215,13 @@ export default function OptionsPage() {
   const arrowEnabled = isCustom && draftSettings.customOptions.arrow !== null;
   const hanjaEnabled = isCustom && draftSettings.customOptions.hanja !== null;
   const dictionaryCount = Object.keys(draftSettings.customDictionary).length;
+  const stopDisabled = !isCustom;
+  const useKrStdict =
+    hanjaEnabled &&
+    (draftSettings.customOptions.hanja?.reading.useDictionaries.includes(
+      "kr-stdict"
+    ) ??
+      false);
 
   return (
     <main className="options-root">
@@ -221,32 +234,47 @@ export default function OptionsPage() {
         <section className="options-card">
           <h2>Preset</h2>
           <div className="row radio-row">
-            <label>
+            <label
+              className={joinClasses(
+                "radio-option",
+                draftSettings.preset === "ko-kr" && "selected"
+              )}
+            >
               <input
                 type="radio"
                 name="preset"
                 checked={draftSettings.preset === "ko-kr"}
                 onChange={() => updateDraft((previous) => ({ ...previous, preset: "ko-kr" }))}
               />
-              South Korean
+              <span>South Korean</span>
             </label>
-            <label>
+            <label
+              className={joinClasses(
+                "radio-option",
+                draftSettings.preset === "ko-kp" && "selected"
+              )}
+            >
               <input
                 type="radio"
                 name="preset"
                 checked={draftSettings.preset === "ko-kp"}
                 onChange={() => updateDraft((previous) => ({ ...previous, preset: "ko-kp" }))}
               />
-              North Korean
+              <span>North Korean</span>
             </label>
-            <label>
+            <label
+              className={joinClasses(
+                "radio-option",
+                draftSettings.preset === "custom" && "selected"
+              )}
+            >
               <input
                 type="radio"
                 name="preset"
                 checked={draftSettings.preset === "custom"}
                 onChange={() => updateDraft((previous) => ({ ...previous, preset: "custom" }))}
               />
-              Custom
+              <span>Custom</span>
             </label>
           </div>
         </section>
@@ -271,7 +299,15 @@ export default function OptionsPage() {
                 <option value="text/markdown">Markdown</option>
               </select>
             </label>
-            <label className="field check">
+            <label
+              className={joinClasses(
+                "field",
+                "check",
+                "toggle-option",
+                isCustom && draftSettings.customOptions.ellipsis && "selected",
+                !isCustom && "disabled"
+              )}
+            >
               <input
                 type="checkbox"
                 disabled={!isCustom}
@@ -287,9 +323,17 @@ export default function OptionsPage() {
                   }))
                 }
               />
-              Ellipsis
+              <span>Ellipsis</span>
             </label>
-            <label className="field check">
+            <label
+              className={joinClasses(
+                "field",
+                "check",
+                "toggle-option",
+                isCustom && draftSettings.customOptions.emDash && "selected",
+                !isCustom && "disabled"
+              )}
+            >
               <input
                 type="checkbox"
                 disabled={!isCustom}
@@ -305,7 +349,7 @@ export default function OptionsPage() {
                   }))
                 }
               />
-              Em dash
+              <span>Em dash</span>
             </label>
           </div>
         </section>
@@ -368,7 +412,15 @@ export default function OptionsPage() {
         <section className="options-card">
           <h2>Arrow / Stop</h2>
           <div className="row">
-            <label className="field check">
+            <label
+              className={joinClasses(
+                "field",
+                "check",
+                "toggle-option",
+                arrowEnabled && "selected",
+                !isCustom && "disabled"
+              )}
+            >
               <input
                 type="checkbox"
                 disabled={!isCustom}
@@ -386,9 +438,17 @@ export default function OptionsPage() {
                   }))
                 }
               />
-              Enable arrow conversion
+              <span>Enable arrow conversion</span>
             </label>
-            <label className="field check">
+            <label
+              className={joinClasses(
+                "field",
+                "check",
+                "toggle-option",
+                arrowEnabled && (draftSettings.customOptions.arrow?.bidirArrow ?? false) && "selected",
+                !arrowEnabled && "disabled"
+              )}
+            >
               <input
                 type="checkbox"
                 disabled={!arrowEnabled}
@@ -407,9 +467,17 @@ export default function OptionsPage() {
                   }))
                 }
               />
-              Bidirectional
+              <span>Bidirectional</span>
             </label>
-            <label className="field check">
+            <label
+              className={joinClasses(
+                "field",
+                "check",
+                "toggle-option",
+                arrowEnabled && (draftSettings.customOptions.arrow?.doubleArrow ?? false) && "selected",
+                !arrowEnabled && "disabled"
+              )}
+            >
               <input
                 type="checkbox"
                 disabled={!arrowEnabled}
@@ -428,15 +496,21 @@ export default function OptionsPage() {
                   }))
                 }
               />
-              Double arrow
+              <span>Double arrow</span>
             </label>
           </div>
           <div className="row radio-row">
-            <label>
+            <label
+              className={joinClasses(
+                "radio-option",
+                isCustom && draftSettings.customOptions.stop === "Horizontal" && "selected",
+                stopDisabled && "disabled"
+              )}
+            >
               <input
                 type="radio"
                 name="stop"
-                disabled={!isCustom}
+                disabled={stopDisabled}
                 checked={isCustom && draftSettings.customOptions.stop === "Horizontal"}
                 onChange={() =>
                   updateDraft((previous) => ({
@@ -449,13 +523,19 @@ export default function OptionsPage() {
                   }))
                 }
               />
-              Horizontal
+              <span>Horizontal</span>
             </label>
-            <label>
+            <label
+              className={joinClasses(
+                "radio-option",
+                isCustom && draftSettings.customOptions.stop === "HorizontalWithSlashes" && "selected",
+                stopDisabled && "disabled"
+              )}
+            >
               <input
                 type="radio"
                 name="stop"
-                disabled={!isCustom}
+                disabled={stopDisabled}
                 checked={
                   isCustom && draftSettings.customOptions.stop === "HorizontalWithSlashes"
                 }
@@ -470,13 +550,19 @@ export default function OptionsPage() {
                   }))
                 }
               />
-              Horizontal with slashes
+              <span>Horizontal with slashes</span>
             </label>
-            <label>
+            <label
+              className={joinClasses(
+                "radio-option",
+                isCustom && draftSettings.customOptions.stop === "Vertical" && "selected",
+                stopDisabled && "disabled"
+              )}
+            >
               <input
                 type="radio"
                 name="stop"
-                disabled={!isCustom}
+                disabled={stopDisabled}
                 checked={isCustom && draftSettings.customOptions.stop === "Vertical"}
                 onChange={() =>
                   updateDraft((previous) => ({
@@ -489,13 +575,19 @@ export default function OptionsPage() {
                   }))
                 }
               />
-              Vertical
+              <span>Vertical</span>
             </label>
-            <label>
+            <label
+              className={joinClasses(
+                "radio-option",
+                isCustom && draftSettings.customOptions.stop === null && "selected",
+                stopDisabled && "disabled"
+              )}
+            >
               <input
                 type="radio"
                 name="stop"
-                disabled={!isCustom}
+                disabled={stopDisabled}
                 checked={isCustom && draftSettings.customOptions.stop === null}
                 onChange={() =>
                   updateDraft((previous) => ({
@@ -508,7 +600,7 @@ export default function OptionsPage() {
                   }))
                 }
               />
-              As is
+              <span>As is</span>
             </label>
           </div>
         </section>
@@ -559,7 +651,15 @@ export default function OptionsPage() {
                 ))}
               </select>
             </label>
-            <label className="field check">
+            <label
+              className={joinClasses(
+                "field",
+                "check",
+                "toggle-option",
+                hanjaEnabled && draftSettings.customOptions.hanja?.reading.initialSoundLaw && "selected",
+                !hanjaEnabled && "disabled"
+              )}
+            >
               <input
                 type="checkbox"
                 disabled={!hanjaEnabled}
@@ -585,19 +685,23 @@ export default function OptionsPage() {
                   }))
                 }
               />
-              Initial Sound Law
+              <span>Initial Sound Law</span>
             </label>
-            <label className="field check">
+            <label
+              className={joinClasses(
+                "field",
+                "check",
+                "toggle-option",
+                hanjaEnabled &&
+                  useKrStdict &&
+                  "selected",
+                !hanjaEnabled && "disabled"
+              )}
+            >
               <input
                 type="checkbox"
                 disabled={!hanjaEnabled}
-                checked={
-                  hanjaEnabled &&
-                  (draftSettings.customOptions.hanja?.reading.useDictionaries.includes(
-                    "kr-stdict"
-                  ) ??
-                    false)
-                }
+                checked={useKrStdict}
                 onChange={(event) =>
                   updateDraft((previous) => {
                     if (previous.customOptions.hanja === null) {
@@ -630,7 +734,7 @@ export default function OptionsPage() {
                   })
                 }
               />
-              South Korean Standard Dictionary
+              <span>South Korean Standard Dictionary</span>
             </label>
           </div>
           <div className="row">

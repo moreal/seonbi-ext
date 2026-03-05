@@ -279,8 +279,8 @@ export async function loadSettings(): Promise<ExtensionSettings> {
 
 export async function saveSettings(settings: ExtensionSettings): Promise<void> {
   const normalized = normalizeSettings(settings);
-  cachedSettings = normalized;
   await browser.storage.sync.set({
     [SETTINGS_STORAGE_KEY]: normalized,
   });
+  cachedSettings = normalized;
 }

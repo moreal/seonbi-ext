@@ -14,6 +14,7 @@ let closeButton: HTMLButtonElement | null = null;
 let updateTimer: number | null = null;
 let transformRequestSerial = 0;
 let transformInFlight = false;
+let latestTransformResult = "";
 
 let selectionText = "";
 let selectionRect: DOMRect | null = null;
@@ -207,8 +208,8 @@ function ensureResultPanel(): HTMLDivElement {
     }
     event.preventDefault();
     event.stopPropagation();
-    if (!copy.disabled && resultText !== null) {
-      await copyToClipboard(resultText.textContent ?? "");
+    if (!copy.disabled && latestTransformResult.length > 0) {
+      await copyToClipboard(latestTransformResult);
       copy.textContent = "Copied";
       window.setTimeout(() => {
         copy.textContent = "Copy";
@@ -353,6 +354,7 @@ function hideResultPanel(): void {
   }
   transformRequestSerial += 1;
   transformInFlight = false;
+  latestTransformResult = "";
 }
 
 function hideAllUi(): void {
@@ -400,6 +402,7 @@ async function showTransformationResult(): Promise<void> {
   transformInFlight = true;
   const requestId = ++transformRequestSerial;
   const selectedTextSnapshot = selectionText;
+  latestTransformResult = "";
   showResultPanel("Converting...", { isLoading: true });
 
   const request: TransformRequest = {
@@ -433,6 +436,7 @@ async function showTransformationResult(): Promise<void> {
   }
 
   showResultPanel(response.result);
+  latestTransformResult = response.result;
   transformInFlight = false;
 }
 

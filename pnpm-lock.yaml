@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@seonbi/wasm':
+        specifier: 0.2.2
+        version: 0.2.2
       plasmo:
         specifier: 0.90.5
         version: 0.90.5(@swc/core@1.15.18(@swc/helpers@0.5.19))(@swc/helpers@0.5.19)(@types/node@18.8.3)(lodash@4.17.23)(postcss@8.5.8)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(terser@5.46.0)
@@ -43,8 +46,8 @@ importers:
         specifier: 2.7.1
         version: 2.7.1
       typescript:
-        specifier: 4.8.4
-        version: 4.8.4
+        specifier: 5.7.3
+        version: 5.7.3
 
 packages:
 
@@ -1409,6 +1412,9 @@ packages:
 
   '@sec-ant/readable-stream@0.4.1':
     resolution: {integrity: sha512-831qok9r2t8AlxLko40y2ebgSDhenenCatLVeW/uBtnHPyhHOvG0C7TvfgecV+wHzIm5KUICgzmVpWS+IMEAeg==}
+
+  '@seonbi/wasm@0.2.2':
+    resolution: {integrity: sha512-8I5WMy3rvVFdYVdX7TQ9fP1gey4QRW12Lu56Ggs7WKkkr+/hbCi6QeuJVMkKAlx9dhDRC5gr8t1hCg0k8AH4Kw==}
 
   '@sindresorhus/is@5.6.0':
     resolution: {integrity: sha512-TV7t8GKYaJWsn00tFDqBw8+Uqmr8A0fRU1tvTQhyZzGv0sJCGRQL3JGMI3ucuKo3XIZdUP+Lx7/gh2t3lewy7g==}
@@ -3110,13 +3116,13 @@ packages:
     resolution: {integrity: sha512-TeTSQ6H5YHvpqVwBRcnLDCBnDOHWYu7IvGbHT6N8AOymcr9PJGjc1GTtiWZTYg0NCgYwvnYWEkVChQAr9bjfwA==}
     engines: {node: '>=16'}
 
-  typescript@4.8.4:
-    resolution: {integrity: sha512-QCh+85mCy+h0IGff8r5XWzOVSbBO+KfeYrMQh7NJ58QujwcE22u+NUSmUxqF+un70P9GXKxa2HCNiTTMJknyjQ==}
-    engines: {node: '>=4.2.0'}
-    hasBin: true
-
   typescript@5.2.2:
     resolution: {integrity: sha512-mI4WrpHsbCIcwT9cF4FZvr80QUeKvsUsUvKDoR+X/7XHQH98xYD8YHZg7ANtz2GtZt/CBq2QJ0thkGJMHfqc1w==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+  typescript@5.7.3:
+    resolution: {integrity: sha512-84MVSjMEHP+FQRPy3pX9sTVV/INIex71s9TL2Gm5FG/WG1SqXeKyZ0k7/blY/4FdOzI12CBy1vGc4og/eus0fw==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -4871,6 +4877,8 @@ snapshots:
 
   '@sec-ant/readable-stream@0.4.1': {}
 
+  '@seonbi/wasm@0.2.2': {}
+
   '@sindresorhus/is@5.6.0': {}
 
   '@sindresorhus/is@7.2.0': {}
@@ -6529,9 +6537,9 @@ snapshots:
 
   type-fest@4.41.0: {}
 
-  typescript@4.8.4: {}
-
   typescript@5.2.2: {}
+
+  typescript@5.7.3: {}
 
   typescript@5.8.2: {}
 

@@ -15,9 +15,18 @@ let updateTimer: number | null = null;
 let transformRequestSerial = 0;
 let transformInFlight = false;
 let latestTransformResult = "";
+let pendingMouseUpPoint: { x: number; y: number } | null = null;
+let pointerDownStartedOnUi = false;
 
 let selectionText = "";
 let selectionRect: DOMRect | null = null;
+let selectionAnchorPoint: { x: number; y: number } | null = null;
+
+interface SelectionContext {
+  text: string;
+  rect: DOMRect;
+  anchorPoint: { x: number; y: number } | null;
+}
 
 export const config: PlasmoContentScript = {
   matches: ["http://*/*", "https://*/*"],
@@ -40,7 +49,17 @@ function isTextInput(element: Element | null): element is HTMLInputElement {
   return supportedTypes.has(element.type);
 }
 
-function getInputSelectionContext(): { text: string; rect: DOMRect } | null {
+function isUiTarget(target: Node | null): boolean {
+  if (target === null) {
+    return false;
+  }
+  return (
+    (actionButton !== null && actionButton.contains(target)) ||
+    (resultPanel !== null && resultPanel.contains(target))
+  );
+}
+
+function getInputSelectionContext(): SelectionContext | null {
   const activeElement = document.activeElement;
   if (activeElement instanceof HTMLTextAreaElement) {
     const start = activeElement.selectionStart ?? 0;
@@ -48,7 +67,12 @@ function getInputSelectionContext(): { text: string; rect: DOMRect } | null {
     if (end > start) {
       const text = activeElement.value.slice(start, end).trim();
       if (text.length > 0) {
-        return { text, rect: activeElement.getBoundingClientRect() };
+        const rect = activeElement.getBoundingClientRect();
+        return {
+          text,
+          rect,
+          anchorPoint: { x: rect.right, y: rect.bottom },
+        };
       }
     }
     return null;
@@ -60,7 +84,12 @@ function getInputSelectionContext(): { text: string; rect: DOMRect } | null {
     if (end > start) {
       const text = activeElement.value.slice(start, end).trim();
       if (text.length > 0) {
-        return { text, rect: activeElement.getBoundingClientRect() };
+        const rect = activeElement.getBoundingClientRect();
+        return {
+          text,
+          rect,
+          anchorPoint: { x: rect.right, y: rect.bottom },
+        };
       }
     }
   }
@@ -68,7 +97,7 @@ function getInputSelectionContext(): { text: string; rect: DOMRect } | null {
   return null;
 }
 
-function getRangeSelectionContext(): { text: string; rect: DOMRect } | null {
+function getRangeSelectionContext(requireEndAnchor: boolean): SelectionContext | null {
   const selection = window.getSelection();
   if (selection === null || selection.rangeCount === 0 || selection.isCollapsed) {
     return null;
@@ -81,19 +110,34 @@ function getRangeSelectionContext(): { text: string; rect: DOMRect } | null {
 
   const range = selection.getRangeAt(0);
   const rect = range.getBoundingClientRect();
+  const shouldReadClientRects =
+    requireEndAnchor || (rect.width === 0 && rect.height === 0);
+  const clientRects = shouldReadClientRects ? range.getClientRects() : null;
+  const lastClientRect =
+    clientRects !== null && clientRects.length > 0
+      ? clientRects.item(clientRects.length - 1)
+      : null;
+
   if (rect.width === 0 && rect.height === 0) {
-    const firstRect = range.getClientRects().item(0);
-    if (firstRect === null) {
+    if (lastClientRect === null) {
       return null;
     }
-    return { text, rect: firstRect };
+    return {
+      text,
+      rect: lastClientRect,
+      anchorPoint: { x: lastClientRect.right, y: lastClientRect.bottom },
+    };
   }
 
-  return { text, rect };
+  const anchorPoint =
+    lastClientRect !== null
+      ? { x: lastClientRect.right, y: lastClientRect.bottom }
+      : { x: rect.right, y: rect.bottom };
+  return { text, rect, anchorPoint };
 }
 
-function getSelectionContext(): { text: string; rect: DOMRect } | null {
-  return getInputSelectionContext() ?? getRangeSelectionContext();
+function getSelectionContext(requireEndAnchor: boolean): SelectionContext | null {
+  return getInputSelectionContext() ?? getRangeSelectionContext(requireEndAnchor);
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -278,13 +322,14 @@ function updateActionButtonPosition(): void {
   if (
     actionButton === null ||
     actionButton.style.display === "none" ||
-    selectionRect === null
+    selectionRect === null ||
+    selectionAnchorPoint === null
   ) {
     return;
   }
 
-  const left = clamp(selectionRect.left, 8, window.innerWidth - 38);
-  const top = clamp(selectionRect.bottom + 6, 8, window.innerHeight - 38);
+  const left = clamp(selectionAnchorPoint.x + 6, 8, window.innerWidth - 38);
+  const top = clamp(selectionAnchorPoint.y + 6, 8, window.innerHeight - 38);
 
   actionButton.style.left = `${left}px`;
   actionButton.style.top = `${top}px`;
@@ -374,16 +419,27 @@ function scheduleSelectionUpdate(): void {
 
 function refreshSelectionState(): void {
   const previousSelectionText = selectionText;
-  const context = getSelectionContext();
+  const context = getSelectionContext(pendingMouseUpPoint === null);
   if (context === null) {
     selectionText = "";
     selectionRect = null;
+    selectionAnchorPoint = null;
+    pendingMouseUpPoint = null;
     hideAllUi();
     return;
   }
 
   selectionText = context.text;
   selectionRect = context.rect;
+  if (pendingMouseUpPoint !== null) {
+    selectionAnchorPoint = pendingMouseUpPoint;
+    pendingMouseUpPoint = null;
+  } else if (context.anchorPoint !== null) {
+    selectionAnchorPoint = context.anchorPoint;
+  } else {
+    selectionAnchorPoint = { x: context.rect.right, y: context.rect.bottom };
+  }
+
   if (selectionText !== previousSelectionText) {
     transformRequestSerial += 1;
     transformInFlight = false;
@@ -465,9 +521,36 @@ async function copyToClipboard(text: string): Promise<void> {
   textarea.remove();
 }
 
+function handleMouseUp(event: MouseEvent): void {
+  if (!event.isTrusted) {
+    pointerDownStartedOnUi = false;
+    return;
+  }
+  if (event.button !== 0) {
+    pointerDownStartedOnUi = false;
+    return;
+  }
+  if (pointerDownStartedOnUi) {
+    pointerDownStartedOnUi = false;
+    return;
+  }
+  pointerDownStartedOnUi = false;
+
+  const target = event.target as Node | null;
+  if (isUiTarget(target)) {
+    return;
+  }
+
+  pendingMouseUpPoint = {
+    x: event.clientX,
+    y: event.clientY,
+  };
+  scheduleSelectionUpdate();
+}
+
 function registerGlobalEvents(): void {
   document.addEventListener("selectionchange", scheduleSelectionUpdate, true);
-  document.addEventListener("mouseup", scheduleSelectionUpdate, true);
+  document.addEventListener("mouseup", handleMouseUp, true);
   document.addEventListener("keyup", scheduleSelectionUpdate, true);
   document.addEventListener(
     "keydown",
@@ -482,13 +565,11 @@ function registerGlobalEvents(): void {
     "mousedown",
     (event) => {
       const target = event.target as Node | null;
-      if (
-        target !== null &&
-        ((actionButton !== null && actionButton.contains(target)) ||
-          (resultPanel !== null && resultPanel.contains(target)))
-      ) {
+      if (isUiTarget(target)) {
+        pointerDownStartedOnUi = true;
         return;
       }
+      pointerDownStartedOnUi = false;
       hideResultPanel();
     },
     true

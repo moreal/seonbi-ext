@@ -15,17 +15,16 @@ let updateTimer: number | null = null;
 let transformRequestSerial = 0;
 let transformInFlight = false;
 let latestTransformResult = "";
-let pendingMouseUpPoint: { x: number; y: number } | null = null;
-let pointerDownStartedOnUi = false;
+type AnchorPoint = { x: number; y: number };
 
 let selectionText = "";
 let selectionRect: DOMRect | null = null;
-let selectionAnchorPoint: { x: number; y: number } | null = null;
+let selectionAnchorPoint: AnchorPoint | null = null;
 
 interface SelectionContext {
   text: string;
   rect: DOMRect;
-  anchorPoint: { x: number; y: number } | null;
+  anchorPoint: AnchorPoint;
 }
 
 export const config: PlasmoContentScript = {
@@ -59,6 +58,44 @@ function isUiTarget(target: Node | null): boolean {
   );
 }
 
+function resolveInputSelectionDirection(
+  element: HTMLInputElement | HTMLTextAreaElement
+): "forward" | "backward" {
+  return element.selectionDirection === "backward" ? "backward" : "forward";
+}
+
+function getDirectionalAnchorPoint(
+  rect: DOMRect,
+  direction: "forward" | "backward"
+): AnchorPoint {
+  if (direction === "backward") {
+    return { x: rect.left, y: rect.bottom };
+  }
+  return { x: rect.right, y: rect.bottom };
+}
+
+function isSelectionBackward(selection: Selection): boolean {
+  if (selection.anchorNode === null || selection.focusNode === null) {
+    return false;
+  }
+
+  try {
+    const anchorRange = document.createRange();
+    anchorRange.setStart(selection.anchorNode, selection.anchorOffset);
+    anchorRange.collapse(true);
+
+    const focusRange = document.createRange();
+    focusRange.setStart(selection.focusNode, selection.focusOffset);
+    focusRange.collapse(true);
+
+    return (
+      anchorRange.compareBoundaryPoints(Range.START_TO_START, focusRange) > 0
+    );
+  } catch {
+    return false;
+  }
+}
+
 function getInputSelectionContext(): SelectionContext | null {
   const activeElement = document.activeElement;
   if (activeElement instanceof HTMLTextAreaElement) {
@@ -68,10 +105,11 @@ function getInputSelectionContext(): SelectionContext | null {
       const text = activeElement.value.slice(start, end).trim();
       if (text.length > 0) {
         const rect = activeElement.getBoundingClientRect();
+        const direction = resolveInputSelectionDirection(activeElement);
         return {
           text,
           rect,
-          anchorPoint: { x: rect.right, y: rect.bottom },
+          anchorPoint: getDirectionalAnchorPoint(rect, direction),
         };
       }
     }
@@ -85,10 +123,11 @@ function getInputSelectionContext(): SelectionContext | null {
       const text = activeElement.value.slice(start, end).trim();
       if (text.length > 0) {
         const rect = activeElement.getBoundingClientRect();
+        const direction = resolveInputSelectionDirection(activeElement);
         return {
           text,
           rect,
-          anchorPoint: { x: rect.right, y: rect.bottom },
+          anchorPoint: getDirectionalAnchorPoint(rect, direction),
         };
       }
     }
@@ -97,7 +136,7 @@ function getInputSelectionContext(): SelectionContext | null {
   return null;
 }
 
-function getRangeSelectionContext(requireEndAnchor: boolean): SelectionContext | null {
+function getRangeSelectionContext(): SelectionContext | null {
   const selection = window.getSelection();
   if (selection === null || selection.rangeCount === 0 || selection.isCollapsed) {
     return null;
@@ -110,34 +149,30 @@ function getRangeSelectionContext(requireEndAnchor: boolean): SelectionContext |
 
   const range = selection.getRangeAt(0);
   const rect = range.getBoundingClientRect();
-  const shouldReadClientRects =
-    requireEndAnchor || (rect.width === 0 && rect.height === 0);
-  const clientRects = shouldReadClientRects ? range.getClientRects() : null;
+  const clientRects = range.getClientRects();
+  const firstClientRect =
+    clientRects.length > 0 ? clientRects.item(0) : null;
   const lastClientRect =
-    clientRects !== null && clientRects.length > 0
-      ? clientRects.item(clientRects.length - 1)
-      : null;
+    clientRects.length > 0 ? clientRects.item(clientRects.length - 1) : null;
 
-  if (rect.width === 0 && rect.height === 0) {
-    if (lastClientRect === null) {
-      return null;
-    }
-    return {
-      text,
-      rect: lastClientRect,
-      anchorPoint: { x: lastClientRect.right, y: lastClientRect.bottom },
-    };
+  const backward = isSelectionBackward(selection);
+  const directionalRect = backward ? firstClientRect : lastClientRect;
+  if (directionalRect === null && rect.width === 0 && rect.height === 0) {
+    return null;
   }
 
-  const anchorPoint =
-    lastClientRect !== null
-      ? { x: lastClientRect.right, y: lastClientRect.bottom }
-      : { x: rect.right, y: rect.bottom };
-  return { text, rect, anchorPoint };
+  const anchorRect = directionalRect ?? rect;
+  const anchorPoint = backward
+    ? { x: anchorRect.left, y: anchorRect.bottom }
+    : { x: anchorRect.right, y: anchorRect.bottom };
+  const resolvedRect =
+    rect.width === 0 && rect.height === 0 ? anchorRect : rect;
+
+  return { text, rect: resolvedRect, anchorPoint };
 }
 
-function getSelectionContext(requireEndAnchor: boolean): SelectionContext | null {
-  return getInputSelectionContext() ?? getRangeSelectionContext(requireEndAnchor);
+function getSelectionContext(): SelectionContext | null {
+  return getInputSelectionContext() ?? getRangeSelectionContext();
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -419,26 +454,18 @@ function scheduleSelectionUpdate(): void {
 
 function refreshSelectionState(): void {
   const previousSelectionText = selectionText;
-  const context = getSelectionContext(pendingMouseUpPoint === null);
+  const context = getSelectionContext();
   if (context === null) {
     selectionText = "";
     selectionRect = null;
     selectionAnchorPoint = null;
-    pendingMouseUpPoint = null;
     hideAllUi();
     return;
   }
 
   selectionText = context.text;
   selectionRect = context.rect;
-  if (pendingMouseUpPoint !== null) {
-    selectionAnchorPoint = pendingMouseUpPoint;
-    pendingMouseUpPoint = null;
-  } else if (context.anchorPoint !== null) {
-    selectionAnchorPoint = context.anchorPoint;
-  } else {
-    selectionAnchorPoint = { x: context.rect.right, y: context.rect.bottom };
-  }
+  selectionAnchorPoint = context.anchorPoint;
 
   if (selectionText !== previousSelectionText) {
     transformRequestSerial += 1;
@@ -523,28 +550,17 @@ async function copyToClipboard(text: string): Promise<void> {
 
 function handleMouseUp(event: MouseEvent): void {
   if (!event.isTrusted) {
-    pointerDownStartedOnUi = false;
     return;
   }
   if (event.button !== 0) {
-    pointerDownStartedOnUi = false;
     return;
   }
-  if (pointerDownStartedOnUi) {
-    pointerDownStartedOnUi = false;
-    return;
-  }
-  pointerDownStartedOnUi = false;
 
   const target = event.target as Node | null;
   if (isUiTarget(target)) {
     return;
   }
 
-  pendingMouseUpPoint = {
-    x: event.clientX,
-    y: event.clientY,
-  };
   scheduleSelectionUpdate();
 }
 
@@ -566,10 +582,8 @@ function registerGlobalEvents(): void {
     (event) => {
       const target = event.target as Node | null;
       if (isUiTarget(target)) {
-        pointerDownStartedOnUi = true;
         return;
       }
-      pointerDownStartedOnUi = false;
       hideResultPanel();
     },
     true
